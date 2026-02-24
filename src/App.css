@@ -1,0 +1,122 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding: var(--space-md);
+  padding-top: env(safe-area-inset-top, var(--space-md));
+  padding-bottom: env(safe-area-inset-bottom, var(--space-md));
+}
+
+.app-header {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.app-title {
+  font-size: var(--font-size-lg);
+  font-weight: 900;
+  text-align: center;
+  padding: var(--space-sm) 0;
+  background: linear-gradient(90deg, var(--color-a), var(--color-b));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.mute-btn {
+  position: absolute;
+  top: var(--space-sm);
+  left: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  border-radius: 50%;
+  font-size: 1rem;
+  line-height: 1;
+  transition: background 0.15s ease;
+}
+
+.mute-btn:hover {
+  background: var(--color-surface-light);
+}
+
+.mute-btn:active {
+  transform: scale(0.9);
+}
+
+.close-btn {
+  position: absolute;
+  top: var(--space-sm);
+  right: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border-radius: 50%;
+  font-size: 1rem;
+  line-height: 1;
+  transition: background 0.15s ease;
+}
+
+.close-btn:hover {
+  background: var(--color-surface-light);
+}
+
+.close-btn:active {
+  transform: scale(0.9);
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.swipe-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Finished Screen */
+.finished-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  animation: fade-in 0.3s ease;
+}
+
+.finished-emoji {
+  font-size: 4rem;
+  animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.finished-text {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.restart-button {
+  padding: var(--space-md) var(--space-xl);
+  background: linear-gradient(135deg, var(--color-a), var(--color-b));
+  color: white;
+  border-radius: var(--radius);
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  transition: transform 0.1s ease;
+}
+
+.restart-button:hover {
+  opacity: 0.9;
+}

@@ -1,0 +1,141 @@
+.result-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+  animation: fade-in 0.2s ease;
+}
+
+.result-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  flex: 1;
+}
+
+.result-option {
+  flex: 1;
+  padding: var(--space-lg) var(--space-md);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.result-option--selected {
+  box-shadow: 0 0 0 2px var(--color-accent), 0 0 16px rgba(255, 215, 0, 0.2);
+}
+
+.result-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius);
+  opacity: 0.2;
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.result-bar--a {
+  background: var(--color-a);
+}
+
+.result-bar--b {
+  background: var(--color-b);
+}
+
+.result-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+.result-emoji {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.result-text {
+  flex: 1;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  word-break: keep-all;
+  line-height: 1.3;
+}
+
+.result-percent {
+  font-size: var(--font-size-xl);
+  font-weight: 900;
+  flex-shrink: 0;
+  min-width: 60px;
+  text-align: right;
+}
+
+.my-choice-badge {
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-sm);
+  background: var(--color-accent);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 2;
+}
+
+.reaction-tag {
+  text-align: center;
+  animation: pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.reaction-majority,
+.reaction-minority {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+}
+
+.reaction-majority {
+  color: var(--color-accent);
+}
+
+.reaction-minority {
+  color: var(--color-a);
+}
+
+.total-votes {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-xs);
+}
+
+.share-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  animation: slide-up 0.3s ease;
+}
+
+.next-button {
+  width: 100%;
+  padding: var(--space-md);
+  background: var(--color-surface-light);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  transition: transform 0.1s ease, background 0.2s ease;
+}
+
+.next-button:hover {
+  background: var(--color-surface);
+}

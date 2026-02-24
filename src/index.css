@@ -1,0 +1,73 @@
+@import './styles/animations.css';
+
+:root {
+  /* Spicy theme palette */
+  --color-bg: #1a1018;
+  --color-surface: #2a1f28;
+  --color-surface-light: #3a2f38;
+  --color-a: #FF4136;
+  --color-a-light: #FF6B63;
+  --color-b: #FF851B;
+  --color-b-light: #FFA04D;
+  --color-text: #FFFAF5;
+  --color-text-muted: #B8A9A0;
+  --color-accent: #FFD700;
+  --color-kakao: #FEE500;
+  --color-kakao-text: #191919;
+
+  /* Typography */
+  --font-main: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-size-xl: clamp(1.5rem, 5vw, 2.2rem);
+  --font-size-lg: clamp(1.1rem, 3.5vw, 1.5rem);
+  --font-size-md: clamp(0.95rem, 2.5vw, 1.1rem);
+  --font-size-sm: clamp(0.8rem, 2vw, 0.9rem);
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+
+  /* Layout */
+  --max-width: 100%;
+  --radius: 16px;
+  --radius-sm: 8px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-main);
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+#root {
+  width: 100%;
+  max-width: var(--max-width);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  font-family: var(--font-main);
+  border: none;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button:active {
+  transform: scale(0.97);
+}

@@ -1,0 +1,83 @@
+.question-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: var(--space-sm) 0;
+  animation: fade-in 0.3s ease;
+}
+
+.choice-button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg) var(--space-md);
+  border: none;
+  border-radius: var(--radius);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.1s ease, filter 0.1s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.choice-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: rgba(255, 255, 255, 0.1);
+  transition: opacity 0.2s ease;
+}
+
+.choice-button:hover::before {
+  opacity: 1;
+}
+
+.choice-button:active {
+  transform: scale(0.97);
+}
+
+.choice-button--a {
+  background: linear-gradient(135deg, var(--color-a), var(--color-a-light));
+  border-radius: var(--radius) var(--radius) var(--radius-sm) var(--radius-sm);
+}
+
+.choice-button--b {
+  background: linear-gradient(135deg, var(--color-b), var(--color-b-light));
+  border-radius: var(--radius-sm) var(--radius-sm) var(--radius) var(--radius);
+}
+
+.choice-emoji {
+  font-size: 2.5rem;
+}
+
+.choice-text {
+  word-break: keep-all;
+  max-width: 90%;
+}
+
+.vs-badge {
+  align-self: center;
+  font-size: var(--font-size-lg);
+  font-weight: 900;
+  color: var(--color-accent);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  padding: var(--space-xs) var(--space-md);
+  z-index: 1;
+  margin: calc(-1 * var(--space-sm)) 0;
+  background: var(--color-bg);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

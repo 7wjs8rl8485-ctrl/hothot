@@ -12,7 +12,7 @@ import ExitModal from './components/ExitModal.jsx';
 import './App.css';
 
 export default function App() {
-  const { phase, currentQuestion, isFinished, alreadyVoted, dispatch } = useGame();
+  const { phase, currentQuestion, isRoundEnd, isAllDone, roundNumber, alreadyVoted, dispatch } = useGame();
   const { counts, submitVote } = useVote(currentQuestion?.id);
   const [showExitModal, setShowExitModal] = useState(false);
   const [muted, setMuted] = useState(isMuted());
@@ -42,11 +42,11 @@ export default function App() {
 
   // 완료 시 축하 효과음
   useEffect(() => {
-    if (isFinished && !prevFinished.current) {
+    if (isAllDone && !prevFinished.current) {
       playSfx('finish');
     }
-    prevFinished.current = isFinished;
-  }, [isFinished]);
+    prevFinished.current = isAllDone;
+  }, [isAllDone]);
 
   // iOS 스와이프 뒤로가기 비활성화
   useEffect(() => {
@@ -102,7 +102,7 @@ export default function App() {
       <ProgressIndicator />
 
       <main className="app-main">
-        {isFinished ? (
+        {isAllDone ? (
           <div className="finished-screen">
             <div className="finished-emoji">🎉</div>
             <p className="finished-text">모든 질문에 답했어요!</p>
@@ -111,6 +111,17 @@ export default function App() {
               onClick={() => dispatch({ type: 'RESET' })}
             >
               처음부터 다시하기
+            </button>
+          </div>
+        ) : isRoundEnd ? (
+          <div className="finished-screen">
+            <div className="finished-emoji">🔥</div>
+            <p className="finished-text">라운드 {roundNumber - 1} 클리어!</p>
+            <button
+              className="restart-button"
+              onClick={() => { playSfx('next'); dispatch({ type: 'NEXT_ROUND' }); }}
+            >
+              더 매운 거 도전 🔥
             </button>
           </div>
         ) : (

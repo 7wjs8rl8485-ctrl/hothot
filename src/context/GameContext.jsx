@@ -1,7 +1,7 @@
 import { createContext, useContext, useReducer, useMemo, useEffect, useRef, useState } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../services/firebase.js';
-import { questions } from '../data/questions.js';
+import { questions, ROUND_SIZE } from '../data/questions.js';
 import { getTossUserKey } from '../services/toss.js';
 
 const GameContext = createContext(null);
@@ -62,6 +62,8 @@ function gameReducer(state, action) {
       return { ...state, userVotes: { ...state.userVotes, ...action.votes } };
     case 'NEXT_QUESTION':
       return { ...state, currentIndex: state.currentIndex + 1, phase: 'choosing' };
+    case 'NEXT_ROUND':
+      return { ...state, phase: 'choosing' };
     case 'RESET':
       return { ...state, currentIndex: 0, phase: 'choosing' };
     case 'JUMP_TO': {
@@ -90,7 +92,11 @@ export function GameProvider({ children }) {
   }, [state.category]);
 
   const currentQuestion = filteredQuestions[state.currentIndex] ?? null;
-  const isFinished = state.currentIndex >= filteredQuestions.length;
+  const isAllDone = state.currentIndex >= filteredQuestions.length;
+  const isRoundEnd = !isAllDone && state.currentIndex > 0 && state.currentIndex % ROUND_SIZE === 0 && state.phase === 'choosing';
+  const isFinished = isAllDone;
+  const roundNumber = Math.floor(state.currentIndex / ROUND_SIZE) + 1;
+  const roundProgress = state.currentIndex % ROUND_SIZE;
 
   const alreadyVoted = currentQuestion ? state.userVotes[currentQuestion.id] || null : null;
 
@@ -155,9 +161,13 @@ export function GameProvider({ children }) {
     filteredQuestions,
     currentQuestion,
     isFinished,
+    isRoundEnd,
+    isAllDone,
+    roundNumber,
+    roundProgress,
     alreadyVoted,
     dispatch,
-  }), [state, userKey, filteredQuestions, currentQuestion, isFinished, alreadyVoted]);
+  }), [state, userKey, filteredQuestions, currentQuestion, isFinished, isRoundEnd, isAllDone, roundNumber, roundProgress, alreadyVoted]);
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

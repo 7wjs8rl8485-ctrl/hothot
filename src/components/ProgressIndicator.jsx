@@ -1,14 +1,14 @@
 import { useGame } from '../context/GameContext.jsx';
+import { ROUND_SIZE } from '../data/questions.js';
 import './ProgressIndicator.css';
 
 export default function ProgressIndicator() {
-  const { currentIndex, filteredQuestions, isFinished } = useGame();
+  const { isRoundEnd, isAllDone, roundNumber, roundProgress } = useGame();
 
-  if (isFinished) return null;
+  if (isRoundEnd || isAllDone) return null;
 
-  const total = filteredQuestions.length;
-  const current = Math.min(currentIndex + 1, total);
-  const progress = (current / total) * 100;
+  const current = roundProgress + 1;
+  const progress = (current / ROUND_SIZE) * 100;
 
   return (
     <div className="progress-indicator">
@@ -18,7 +18,7 @@ export default function ProgressIndicator() {
           style={{ width: `${progress}%` }}
         />
       </div>
-      <span className="progress-text">{current} / {total}</span>
+      <span className="progress-text">R{roundNumber} · {current}/{ROUND_SIZE}</span>
     </div>
   );
 }

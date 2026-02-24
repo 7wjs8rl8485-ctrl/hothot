@@ -45,7 +45,7 @@ async function loadUserVotesFromFirestore(userKey) {
 const initialState = {
   category: 'all',
   currentIndex: 0,
-  phase: 'choosing', // 'choosing' | 'result'
+  phase: 'choosing', // 'choosing' | 'result' | 'round_end'
   userVotes: loadLocalVotes(),
 };
 
@@ -60,8 +60,11 @@ function gameReducer(state, action) {
     }
     case 'LOAD_VOTES':
       return { ...state, userVotes: { ...state.userVotes, ...action.votes } };
-    case 'NEXT_QUESTION':
-      return { ...state, currentIndex: state.currentIndex + 1, phase: 'choosing' };
+    case 'NEXT_QUESTION': {
+      const nextIndex = state.currentIndex + 1;
+      const isRoundBoundary = nextIndex > 0 && nextIndex % ROUND_SIZE === 0;
+      return { ...state, currentIndex: nextIndex, phase: isRoundBoundary ? 'round_end' : 'choosing' };
+    }
     case 'NEXT_ROUND':
       return { ...state, phase: 'choosing' };
     case 'RESET':
@@ -93,7 +96,7 @@ export function GameProvider({ children }) {
 
   const currentQuestion = filteredQuestions[state.currentIndex] ?? null;
   const isAllDone = state.currentIndex >= filteredQuestions.length;
-  const isRoundEnd = !isAllDone && state.currentIndex > 0 && state.currentIndex % ROUND_SIZE === 0 && state.phase === 'choosing';
+  const isRoundEnd = state.phase === 'round_end' && !isAllDone;
   const isFinished = isAllDone;
   const roundNumber = Math.floor(state.currentIndex / ROUND_SIZE) + 1;
   const roundProgress = state.currentIndex % ROUND_SIZE;

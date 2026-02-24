@@ -25,7 +25,7 @@ export function shareKakao(question) {
   if (!window.Kakao) return false;
 
   if (!window.Kakao.isInitialized()) {
-    const key = import.meta.env.VITE_KAKAO_JS_KEY || 'c1ae9624525eaf25ff11f05f0ebe2f5a';
+    const key = import.meta.env.VITE_KAKAO_JS_KEY || '4dfd6e5647ece15632391528e234b136';
     window.Kakao.init(key);
   }
 

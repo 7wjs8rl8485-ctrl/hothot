@@ -21,8 +21,33 @@ export async function shareNative(question, percentA, percentB) {
   return false;
 }
 
-export function shareKakao(question) {
-  if (!window.Kakao) return false;
+function waitForKakaoSDK(timeout = 3000) {
+  return new Promise((resolve) => {
+    if (window.Kakao) return resolve(true);
+    const start = Date.now();
+    const check = setInterval(() => {
+      if (window.Kakao) { clearInterval(check); resolve(true); }
+      else if (Date.now() - start > timeout) { clearInterval(check); resolve(false); }
+    }, 100);
+  });
+}
+
+function kakaoShareFallback(question) {
+  const url = `${APP_URL}?q=${question.id}`;
+  const text = `매운맛 밸런스게임\n${question.choiceA.text} vs ${question.choiceB.text}\n너는 어느 쪽?`;
+  if (navigator.share) {
+    navigator.share({ title: '매운맛 밸런스게임', text, url }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {});
+  }
+}
+
+export async function shareKakao(question) {
+  const sdkLoaded = await waitForKakaoSDK();
+  if (!sdkLoaded) {
+    kakaoShareFallback(question);
+    return false;
+  }
 
   if (!window.Kakao.isInitialized()) {
     const key = import.meta.env.VITE_KAKAO_JS_KEY || '4dfd6e5647ece15632391528e234b136';
@@ -32,12 +57,14 @@ export function shareKakao(question) {
   const url = `${APP_URL}?q=${question.id}`;
 
   try {
-    window.Kakao.Share.sendDefault({
+    await window.Kakao.Share.sendDefault({
       objectType: 'feed',
       content: {
         title: '매운맛 밸런스게임',
         description: `${question.choiceA.text} vs ${question.choiceB.text}`,
         imageUrl: `${APP_URL}/og-image.png`,
+        imageWidth: 1200,
+        imageHeight: 630,
         link: { mobileWebUrl: url, webUrl: url },
       },
       buttons: [
@@ -50,6 +77,7 @@ export function shareKakao(question) {
     return true;
   } catch (err) {
     console.warn('Kakao share error:', err);
+    kakaoShareFallback(question);
     return false;
   }
 }

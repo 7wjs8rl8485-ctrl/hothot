@@ -13,8 +13,8 @@ export default function SharePanel({ question, percentA, percentB }) {
     }
   };
 
-  const handleKakao = () => {
-    shareKakao(question);
+  const handleKakao = async () => {
+    await shareKakao(question);
   };
 
   const handleCopy = async () => {

@@ -1,9 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import {
   canNativeShare,
-  shareGeneric,
-  setupKakaoButton,
-  shareSMS,
+  shareAction,
   shareClipboard,
   getShareDebugLogs,
 } from '../services/share.js';
@@ -13,43 +11,41 @@ export default function SharePanel({ question }) {
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState(null);
   const [debugVisible, setDebugVisible] = useState(true);
-  const [debugKey, setDebugKey] = useState(0);
   const tapRef = useRef({ count: 0, timer: null });
-  const kakaoRef = useRef(null);
   const hasNativeShare = canNativeShare();
 
-  // ── 카카오 버튼 바인딩 (question 변경 시마다) ─────────────────
-  useEffect(() => {
-    if (hasNativeShare || !kakaoRef.current) return;
-    const ok = setupKakaoButton(kakaoRef.current, question);
-    if (ok) setDebugKey(k => k + 1); // 로그 갱신
-  }, [question, hasNativeShare]);
-
-  // ── iOS: 네이티브 공유 시트 ─────────────────────────────────
   const handleShare = async () => {
     setStatus('sharing');
-    const result = await shareGeneric(question);
-    if (result.ok) {
-      setStatus(null);
-      return;
-    }
-    const clipOk = await shareClipboard(question);
-    if (clipOk) {
-      setCopied(true);
-      setStatus('copied-fallback');
-      setTimeout(() => { setCopied(false); setStatus(null); }, 3000);
-    } else {
+    try {
+      const result = await shareAction(question);
+
+      if (result.ok) {
+        // iOS 네이티브 공유 성공
+        setStatus(null);
+        return;
+      }
+
+      if (result.cancelled) {
+        setStatus(null);
+        return;
+      }
+
+      // Android — 링크 복사됨 + 안내
+      if (result.copied) {
+        setCopied(true);
+        setStatus('guide');
+        setTimeout(() => { setCopied(false); setStatus(null); }, 5000);
+      } else {
+        setStatus('error');
+        setTimeout(() => setStatus(null), 3000);
+      }
+    } catch (e) {
+      console.error('[share]', e);
       setStatus('error');
-      setTimeout(() => setStatus(null), 5000);
+      setTimeout(() => setStatus(null), 3000);
     }
   };
 
-  // ── Android: 문자 공유 ──────────────────────────────────────
-  const handleSMS = () => {
-    shareSMS(question);
-  };
-
-  // ── 링크 복사 ──────────────────────────────────────────────
   const handleCopy = async () => {
     const success = await shareClipboard(question);
     if (success) {
@@ -70,47 +66,37 @@ export default function SharePanel({ question }) {
     }
   };
 
+  const shareLabel = () => {
+    if (status === 'sharing') return '공유 중...';
+    if (status === 'guide') return '링크 복사됨!';
+    if (status === 'error') return '공유 실패';
+    return '공유하기';
+  };
+
   return (
     <div className="share-panel">
-      {hasNativeShare ? (
-        /* ── iOS: 공유하기 + 링크 복사 ─────────────────────── */
-        <div className="share-buttons">
-          <button
-            className="share-btn share-btn--share"
-            onClick={handleShare}
-            disabled={status === 'sharing'}
-          >
-            {status === 'sharing' ? '공유 중...'
-              : status === 'copied-fallback' ? '링크 복사됨!'
-              : status === 'error' ? '공유 실패'
-              : '공유하기'}
-          </button>
-          <button className="share-btn share-btn--copy" onClick={handleCopy}>
-            {copied ? '복사됨!' : '링크 복사'}
-          </button>
-        </div>
-      ) : (
-        /* ── Android: 카카오톡 / 문자 / 링크 복사 ──────────── */
-        <div className="share-buttons">
-          <button
-            ref={kakaoRef}
-            className="share-btn share-btn--kakao"
-          >
-            카카오톡
-          </button>
-          <button className="share-btn share-btn--sms" onClick={handleSMS}>
-            문자
-          </button>
-          <button className="share-btn share-btn--copy" onClick={handleCopy}>
-            {copied ? '복사됨!' : '링크 복사'}
-          </button>
-        </div>
+      <div className="share-buttons">
+        <button
+          className="share-btn share-btn--share"
+          onClick={handleShare}
+          disabled={status === 'sharing'}
+        >
+          {shareLabel()}
+        </button>
+        <button className="share-btn share-btn--copy" onClick={handleCopy}>
+          {copied ? '복사됨!' : '링크 복사'}
+        </button>
+      </div>
+
+      {status === 'guide' && !hasNativeShare && (
+        <p className="share-guide" onClick={handleDebugTap}>
+          링크가 복사되었어요!<br />
+          아래 <strong>공유(↗)</strong> 버튼을 눌러 공유할 수 있어요
+        </p>
       )}
 
       {debugVisible && (
-        <pre className="share-debug" onClick={handleDebugTap}>
-          {getShareDebugLogs().join('\n') || '(로그 없음)'}
-        </pre>
+        <pre className="share-debug">{getShareDebugLogs().join('\n') || '(로그 없음)'}</pre>
       )}
     </div>
   );

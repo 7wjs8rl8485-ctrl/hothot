@@ -1,5 +1,4 @@
 const APP_URL = typeof window !== 'undefined' ? window.location.origin : '';
-const KAKAO_KEY = import.meta.env.VITE_KAKAO_JS_KEY;
 
 // ── 디버그 로그 ─────────────────────────────────────────────
 const _logs = [];
@@ -17,38 +16,19 @@ export function canNativeShare() {
   return typeof navigator !== 'undefined' && !!navigator.share;
 }
 
-function isAndroid() {
-  return /android/i.test(navigator.userAgent);
-}
-
-// ── Kakao SDK 초기화 ────────────────────────────────────────
-function ensureKakao() {
-  if (!window.Kakao) {
-    log('kakao: SDK not loaded');
-    return false;
-  }
-  if (!window.Kakao.isInitialized()) {
-    try {
-      window.Kakao.init(KAKAO_KEY);
-      log('kakao: initialized');
-    } catch (e) {
-      log(`kakao init FAIL: ${e?.message}`);
-      return false;
-    }
-  }
-  return true;
-}
-
-// ── 공유하기 (네이티브 공유 시트 — iOS 전용) ────────────────
-export async function shareGeneric(question) {
+// ── 공유하기 ────────────────────────────────────────────────
+// iOS: navigator.share → 네이티브 공유 시트
+// Android WebView: 링크 복사 + 안내 (네이티브 공유 불가)
+export async function shareAction(question) {
   const url = `${APP_URL}?q=${question.id}`;
   const text =
     `매운맛 밸런스게임\n` +
     `${question.choiceA.text} vs ${question.choiceB.text}\n` +
     `너는 어느 쪽?\n${url}`;
 
-  log(`webShareAPI=${!!navigator.share}, android=${isAndroid()}`);
+  log(`navigator.share=${!!navigator.share}`);
 
+  // iOS — 네이티브 공유 시트
   if (navigator.share) {
     try {
       await navigator.share({ title: '매운맛 밸런스게임', text, url });
@@ -60,79 +40,29 @@ export async function shareGeneric(question) {
     }
   }
 
-  log('navigator.share not available');
-  return { ok: false };
-}
-
-// ── 카카오톡 공유 (createDefaultButton) ──────────────────────
-// sendDefault는 API 호출 후 프로그래밍 방식으로 리다이렉트하기 때문에
-// WebView가 kakaotalk:// scheme을 차단함.
-// createDefaultButton은 유저 클릭 이벤트 내에서 직접 처리되므로
-// WebView가 scheme을 허용할 가능성이 높음.
-export function setupKakaoButton(container, question) {
-  const url = `${APP_URL}?q=${question.id}`;
-
-  if (!ensureKakao()) return false;
-
-  try {
-    window.Kakao.Share.createDefaultButton({
-      container,
-      objectType: 'feed',
-      content: {
-        title: '매운맛 밸런스게임 🔥',
-        description: `${question.choiceA.text} vs ${question.choiceB.text}`,
-        imageUrl: `${APP_URL}/og-image.png`,
-        link: { mobileWebUrl: url, webUrl: url },
-      },
-      buttons: [
-        {
-          title: '투표하러 가기',
-          link: { mobileWebUrl: url, webUrl: url },
-        },
-      ],
-    });
-    log('kakao: button created');
-    return true;
-  } catch (e) {
-    log(`kakao setup FAIL: ${e?.message}`);
-    return false;
-  }
-}
-
-// ── 문자(SMS) 공유 ──────────────────────────────────────────
-export function shareSMS(question) {
-  const url = `${APP_URL}?q=${question.id}`;
-  const text =
-    `매운맛 밸런스게임\n` +
-    `${question.choiceA.text} vs ${question.choiceB.text}\n` +
-    `너는 어느 쪽?\n${url}`;
-
-  try {
-    window.location.href = `sms:?body=${encodeURIComponent(text)}`;
-    log('sms: opened');
-    return true;
-  } catch (e) {
-    log(`sms: ${e?.message}`);
-    return false;
-  }
+  // Android WebView — 링크 복사 fallback
+  log('fallback: clipboard');
+  const copied = await copyToClipboard(url);
+  return { ok: false, copied };
 }
 
 // ── 링크 복사 ──────────────────────────────────────────────
 export async function shareClipboard(question) {
   const url = `${APP_URL}?q=${question.id}`;
+  return copyToClipboard(url);
+}
 
-  // 1. 브라우저 Clipboard API
+async function copyToClipboard(text) {
   try {
-    await navigator.clipboard.writeText(url);
+    await navigator.clipboard.writeText(text);
     return true;
   } catch (e) {
     log(`clip(browser): ${e?.message}`);
   }
 
-  // 2. execCommand fallback
   try {
     const ta = document.createElement('textarea');
-    ta.value = url;
+    ta.value = text;
     ta.style.position = 'fixed';
     ta.style.opacity = '0';
     document.body.appendChild(ta);

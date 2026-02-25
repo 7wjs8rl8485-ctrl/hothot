@@ -116,14 +116,14 @@ export default function ResultView({ voteCounts, onNext }) {
 
       {showShare && (
         <div className="share-area">
+          <button className="next-button" onClick={onNext}>
+            다음 질문 →
+          </button>
           <SharePanel
             question={currentQuestion}
             percentA={percentA}
             percentB={percentB}
           />
-          <button className="next-button" onClick={onNext}>
-            다음 질문 →
-          </button>
         </div>
       )}
     </div>

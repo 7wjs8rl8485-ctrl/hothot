@@ -1,5 +1,17 @@
 const APP_URL = typeof window !== 'undefined' ? window.location.origin : '';
 
+// 카카오 SDK 초기화 (lazy — 최초 호출 시 1회)
+function ensureKakaoInit() {
+  if (typeof window === 'undefined' || !window.Kakao) return false;
+  if (!window.Kakao.isInitialized()) {
+    const key = (import.meta.env.VITE_KAKAO_JS_KEY || '').trim();
+    if (key) {
+      window.Kakao.init(key);
+    }
+  }
+  return window.Kakao.isInitialized();
+}
+
 export async function shareNative(question, percentA, percentB) {
   const text = `매운맛 밸런스게임\n\n` +
     `A: ${question.choiceA.text} (${percentA}%)\n` +
@@ -23,9 +35,39 @@ export async function shareNative(question, percentA, percentB) {
 
 export async function shareKakao(question) {
   const url = `${APP_URL}?q=${question.id}`;
-  const text = `매운맛 밸런스게임\n${question.choiceA.text} vs ${question.choiceB.text}\n너는 어느 쪽?`;
 
-  // navigator.share 사용 — 공유 시트에서 카카오톡 선택 가능
+  // 카카오 SDK — 리치 카드 (이미지 + 제목 + 버튼) 공유
+  if (ensureKakaoInit()) {
+    try {
+      window.Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title: '매운맛 밸런스게임',
+          description: `${question.choiceA.text} vs ${question.choiceB.text}\n너는 어느 쪽?`,
+          imageUrl: `${APP_URL}/og-image.png`,
+          link: {
+            mobileWebUrl: url,
+            webUrl: url,
+          },
+        },
+        buttons: [
+          {
+            title: '나도 투표하기',
+            link: {
+              mobileWebUrl: url,
+              webUrl: url,
+            },
+          },
+        ],
+      });
+      return true;
+    } catch (err) {
+      console.warn('Kakao share failed:', err);
+    }
+  }
+
+  // Fallback: navigator.share
+  const text = `매운맛 밸런스게임\n${question.choiceA.text} vs ${question.choiceB.text}\n너는 어느 쪽?`;
   if (navigator.share) {
     try {
       await navigator.share({ title: '매운맛 밸런스게임', text, url });
@@ -35,12 +77,10 @@ export async function shareKakao(question) {
     }
   }
 
-  // fallback: 클립보드 복사
+  // Fallback: 클립보드 복사
   try {
     await navigator.clipboard.writeText(`${text}\n${url}`);
-  } catch {
-    // ignore
-  }
+  } catch {}
   return false;
 }
 

@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   canNativeShare,
   shareGeneric,
-  shareKakao,
+  setupKakaoButton,
   shareSMS,
   shareClipboard,
   getShareDebugLogs,
@@ -13,8 +13,17 @@ export default function SharePanel({ question }) {
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState(null);
   const [debugVisible, setDebugVisible] = useState(true);
+  const [debugKey, setDebugKey] = useState(0);
   const tapRef = useRef({ count: 0, timer: null });
+  const kakaoRef = useRef(null);
   const hasNativeShare = canNativeShare();
+
+  // ── 카카오 버튼 바인딩 (question 변경 시마다) ─────────────────
+  useEffect(() => {
+    if (hasNativeShare || !kakaoRef.current) return;
+    const ok = setupKakaoButton(kakaoRef.current, question);
+    if (ok) setDebugKey(k => k + 1); // 로그 갱신
+  }, [question, hasNativeShare]);
 
   // ── iOS: 네이티브 공유 시트 ─────────────────────────────────
   const handleShare = async () => {
@@ -24,7 +33,6 @@ export default function SharePanel({ question }) {
       setStatus(null);
       return;
     }
-    // 실패 시 링크 복사 fallback
     const clipOk = await shareClipboard(question);
     if (clipOk) {
       setCopied(true);
@@ -33,32 +41,6 @@ export default function SharePanel({ question }) {
     } else {
       setStatus('error');
       setTimeout(() => setStatus(null), 5000);
-    }
-  };
-
-  // ── Android: 카카오톡 공유 ──────────────────────────────────
-  const handleKakao = async () => {
-    setStatus('kakao');
-    try {
-      const ok = await shareKakao(question);
-      if (!ok) {
-        // 카카오 실패 → 링크 복사 후 안내
-        const clipOk = await shareClipboard(question);
-        if (clipOk) {
-          setCopied(true);
-          setStatus('kakao-fallback');
-          setTimeout(() => { setCopied(false); setStatus(null); }, 3000);
-        } else {
-          setStatus('error');
-          setTimeout(() => setStatus(null), 5000);
-        }
-        return;
-      }
-      setStatus(null);
-    } catch (e) {
-      console.error('[kakao handler]', e);
-      setStatus('error');
-      setTimeout(() => setStatus(null), 3000);
     }
   };
 
@@ -109,34 +91,26 @@ export default function SharePanel({ question }) {
         </div>
       ) : (
         /* ── Android: 카카오톡 / 문자 / 링크 복사 ──────────── */
-        <>
-          <div className="share-buttons">
-            <button
-              className="share-btn share-btn--kakao"
-              onClick={handleKakao}
-              disabled={status === 'kakao'}
-            >
-              {status === 'kakao' ? '전송 중...'
-                : status === 'kakao-fallback' ? '링크 복사됨!'
-                : '카카오톡'}
-            </button>
-            <button className="share-btn share-btn--sms" onClick={handleSMS}>
-              문자
-            </button>
-            <button className="share-btn share-btn--copy" onClick={handleCopy}>
-              {copied ? '복사됨!' : '링크 복사'}
-            </button>
-          </div>
-          {status === 'kakao-fallback' && (
-            <p className="share-hint" onClick={handleDebugTap}>
-              카카오톡 공유 실패 — 링크가 복사되었어요
-            </p>
-          )}
-        </>
+        <div className="share-buttons">
+          <button
+            ref={kakaoRef}
+            className="share-btn share-btn--kakao"
+          >
+            카카오톡
+          </button>
+          <button className="share-btn share-btn--sms" onClick={handleSMS}>
+            문자
+          </button>
+          <button className="share-btn share-btn--copy" onClick={handleCopy}>
+            {copied ? '복사됨!' : '링크 복사'}
+          </button>
+        </div>
       )}
 
       {debugVisible && (
-        <pre className="share-debug">{getShareDebugLogs().join('\n') || '(로그 없음)'}</pre>
+        <pre className="share-debug" onClick={handleDebugTap}>
+          {getShareDebugLogs().join('\n') || '(로그 없음)'}
+        </pre>
       )}
     </div>
   );

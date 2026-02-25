@@ -64,14 +64,19 @@ export async function shareGeneric(question) {
   return { ok: false };
 }
 
-// ── 카카오톡 공유 ───────────────────────────────────────────
-export async function shareKakao(question) {
+// ── 카카오톡 공유 (createDefaultButton) ──────────────────────
+// sendDefault는 API 호출 후 프로그래밍 방식으로 리다이렉트하기 때문에
+// WebView가 kakaotalk:// scheme을 차단함.
+// createDefaultButton은 유저 클릭 이벤트 내에서 직접 처리되므로
+// WebView가 scheme을 허용할 가능성이 높음.
+export function setupKakaoButton(container, question) {
   const url = `${APP_URL}?q=${question.id}`;
 
   if (!ensureKakao()) return false;
 
   try {
-    await window.Kakao.Share.sendDefault({
+    window.Kakao.Share.createDefaultButton({
+      container,
       objectType: 'feed',
       content: {
         title: '매운맛 밸런스게임 🔥',
@@ -86,10 +91,10 @@ export async function shareKakao(question) {
         },
       ],
     });
-    log('kakao: sendDefault OK');
+    log('kakao: button created');
     return true;
   } catch (e) {
-    log(`kakao FAIL: ${e?.message}`);
+    log(`kakao setup FAIL: ${e?.message}`);
     return false;
   }
 }

@@ -4,7 +4,7 @@ import './SharePanel.css';
 
 export default function SharePanel({ question }) {
   const [copied, setCopied] = useState(false);
-  const [status, setStatus] = useState(null); // null | 'sharing' | 'copied-fallback' | 'error'
+  const [status, setStatus] = useState(null);
   const [debugVisible, setDebugVisible] = useState(false);
   const tapRef = useRef({ count: 0, timer: null });
 
@@ -12,13 +12,26 @@ export default function SharePanel({ question }) {
     setStatus('sharing');
     const result = await shareGeneric(question);
 
-    if (result.ok) {
+    if (result.ok && !result.uncertain) {
+      // Web Share API 성공 — 공유 시트가 확실히 열림
       setStatus(null);
       return;
     }
 
-    // 공유 실패 → 자동으로 링크 복사 + 에러 로그 표시
-    setDebugVisible(true); // 디버그 로그 자동 표시
+    if (result.ok && result.uncertain) {
+      // intent URL 시도됨 — 공유 시트가 열렸을 수도 있음
+      // 클립보드에도 복사해둠 (백업)
+      await shareClipboard(question);
+      setCopied(true);
+      setStatus('intent-sent');
+      setTimeout(() => {
+        setCopied(false);
+        setStatus(null);
+      }, 4000);
+      return;
+    }
+
+    // 공유 실패 → 링크 복사 + 안내
     const clipOk = await shareClipboard(question);
     if (clipOk) {
       setCopied(true);
@@ -41,7 +54,7 @@ export default function SharePanel({ question }) {
     }
   };
 
-  // 5번 빠르게 탭하면 디버그 패널 토글
+  // 5번 탭 → 디버그 토글
   const handleDebugTap = () => {
     const ref = tapRef.current;
     ref.count++;
@@ -55,6 +68,7 @@ export default function SharePanel({ question }) {
 
   const shareLabel = () => {
     if (status === 'sharing') return '공유 중...';
+    if (status === 'intent-sent') return '링크 복사됨!';
     if (status === 'copied-fallback') return '링크 복사됨!';
     if (status === 'error') return '공유 실패';
     return '공유하기';
@@ -75,9 +89,9 @@ export default function SharePanel({ question }) {
         </button>
       </div>
 
-      {status === 'copied-fallback' && (
+      {(status === 'intent-sent' || status === 'copied-fallback') && (
         <p className="share-hint" onClick={handleDebugTap}>
-          하단 공유 버튼도 이용할 수 있어요
+          하단 ↗ 공유 버튼도 이용할 수 있어요
         </p>
       )}
 

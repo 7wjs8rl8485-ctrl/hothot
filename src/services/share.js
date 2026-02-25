@@ -1,12 +1,6 @@
-import {
-  share as tossShare,
-  setClipboardText,
-  openURL,
-} from '@apps-in-toss/web-bridge';
-
 const APP_URL = typeof window !== 'undefined' ? window.location.origin : '';
 
-// ── 디버그 로그 (화면에 표시 가능) ──────────────────────────
+// ── 디버그 로그 ─────────────────────────────────────────────
 const _logs = [];
 function log(msg) {
   const ts = new Date().toLocaleTimeString('ko-KR', { hour12: false });
@@ -17,32 +11,8 @@ export function getShareDebugLogs() {
   return [..._logs];
 }
 
-// ── 유틸리티 ─────────────────────────────────────────────────
-function isTossEnv() {
-  return typeof window !== 'undefined' && !!window.__granite_bridge__;
-}
-
 function isAndroid() {
   return /android/i.test(navigator.userAgent);
-}
-
-function getPlatformSafe() {
-  try {
-    const map = window.__CONSTANT_HANDLER_MAP;
-    if (map && 'getPlatformOS' in map) return map.getPlatformOS;
-  } catch { /* constantBridge unavailable */ }
-  return isAndroid() ? 'android' : 'ios';
-}
-
-/** Promise에 타임아웃 추가 — 네이티브가 응답하지 않으면 hang 방지 */
-function withTimeout(promise, ms) {
-  let timer;
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      timer = setTimeout(() => reject(new Error(`timeout:${ms}ms`)), ms);
-    }),
-  ]).finally(() => clearTimeout(timer));
 }
 
 // ── 공유하기 (네이티브 공유 시트) ─────────────────────────────
@@ -53,77 +23,74 @@ export async function shareGeneric(question) {
     `${question.choiceA.text} vs ${question.choiceB.text}\n` +
     `너는 어느 쪽?\n${url}`;
 
-  const inToss = isTossEnv();
-  const hasRNWV = typeof window !== 'undefined' && !!window.ReactNativeWebView;
-  const platform = getPlatformSafe();
-  log(`env: toss=${inToss}, RNWV=${hasRNWV}, platform=${platform}`);
+  log(`share: webShareAPI=${!!navigator.share}, android=${isAndroid()}`);
 
-  // ── 전략 1: Toss SDK share (공식 API) ──────────────────────
-  if (inToss && hasRNWV) {
-    try {
-      log('1) tossShare({ message })...');
-      await withTimeout(tossShare({ message: text }), 5000);
-      log('1) SUCCESS');
-      return { ok: true, method: 'toss-share' };
-    } catch (e) {
-      const errMsg = e?.message || String(e);
-      log(`1) FAIL: ${errMsg}`);
-    }
-
-    // ── 전략 2 (Android): intent URL via openURL ─────────────
-    // openURL은 React Native Linking.openURL 사용 — Android intent URL 가능
-    if (platform === 'android') {
-      try {
-        const intentUrl =
-          `intent:#Intent;` +
-          `action=android.intent.action.SEND;` +
-          `type=text/plain;` +
-          `S.android.intent.extra.TEXT=${encodeURIComponent(text)};end`;
-        log('2) openURL(intent://)...');
-        await withTimeout(openURL(intentUrl), 3000);
-        log('2) SUCCESS');
-        return { ok: true, method: 'intent-url' };
-      } catch (e) {
-        log(`2) FAIL: ${e?.message || String(e)}`);
-      }
-    }
-  }
-
-  // ── 전략 3: Web Share API (일반 브라우저) ───────────────────
+  // ── 전략 1: Web Share API (iOS WebView, Chrome 등) ─────────
   if (navigator.share) {
     try {
-      log('3) navigator.share...');
       await navigator.share({ title: '매운맛 밸런스게임', text, url });
-      log('3) SUCCESS');
+      log('web-share SUCCESS');
       return { ok: true, method: 'web-share' };
     } catch (e) {
-      log(`3) FAIL: ${e?.message || String(e)}`);
-      return { ok: false, error: e?.message };
+      log(`web-share: ${e?.name}: ${e?.message}`);
+      if (e?.name === 'AbortError') return { ok: false, cancelled: true };
     }
   }
 
-  log('ALL share strategies exhausted');
-  return { ok: false, error: 'no-share-available' };
+  // ── 전략 2 (Android): intent URL로 시스템 공유 시트 트리거 ──
+  // Android WebView에서는 navigator.share 미지원 →
+  // intent:// URL을 iframe으로 열어 시스템에 ACTION_SEND 요청
+  if (isAndroid()) {
+    try {
+      const intentUrl =
+        `intent:#Intent;` +
+        `action=android.intent.action.SEND;` +
+        `type=text/plain;` +
+        `S.android.intent.extra.TEXT=${encodeURIComponent(text)};end`;
+
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = intentUrl;
+      document.body.appendChild(iframe);
+      setTimeout(() => iframe.remove(), 2000);
+
+      log('intent iframe triggered');
+      // intent 처리 여부를 JS에서 확인 불가 → 'maybe'로 반환
+      return { ok: true, method: 'intent', uncertain: true };
+    } catch (e) {
+      log(`intent FAIL: ${e?.message || String(e)}`);
+    }
+  }
+
+  log('all share methods failed');
+  return { ok: false };
 }
 
 // ── 링크 복사 ──────────────────────────────────────────────
 export async function shareClipboard(question) {
   const url = `${APP_URL}?q=${question.id}`;
 
-  // 1. Toss SDK 클립보드
-  try {
-    await setClipboardText(url);
-    return true;
-  } catch (e) {
-    log(`clipboard(toss) FAIL: ${e?.message || String(e)}`);
-  }
-
-  // 2. 브라우저 Clipboard API
+  // 1. 브라우저 Clipboard API
   try {
     await navigator.clipboard.writeText(url);
     return true;
   } catch (e) {
     log(`clipboard(browser) FAIL: ${e?.message || String(e)}`);
+  }
+
+  // 2. execCommand fallback (구형 WebView)
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = url;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    return true;
+  } catch (e) {
+    log(`clipboard(exec) FAIL: ${e?.message || String(e)}`);
     return false;
   }
 }

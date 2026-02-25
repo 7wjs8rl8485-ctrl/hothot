@@ -3,8 +3,9 @@ import { closeView, getUserKeyForGame, setIosSwipeGestureEnabled, share as nativ
 // 토스 앱 내 WebView 환경인지 감지
 export function isTossEnv() {
   try {
-    // web-bridge는 토스 앱 WebView에서만 정상 동작
-    return typeof window !== 'undefined' && !!window.__granite_bridge__;
+    if (typeof window === 'undefined') return false;
+    // __granite_bridge__ 또는 ReactNativeWebView 존재 시 토스 환경
+    return !!window.__granite_bridge__ || !!window.ReactNativeWebView;
   } catch {
     return false;
   }
@@ -32,10 +33,15 @@ export async function getTossUserKey() {
   }
 }
 
-// 토스 네이티브 공유 시트
+// 토스 네이티브 공유 시트 (타임아웃 포함)
 export async function tossShare(message) {
   try {
-    await nativeShare({ message });
+    // 네이티브 공유 시트가 열리면 resolve 안 올 수 있으므로 타임아웃 처리
+    // 타임아웃 = 공유 시트가 열렸다고 간주 (성공)
+    await Promise.race([
+      nativeShare({ message }),
+      new Promise(resolve => setTimeout(resolve, 3000)),
+    ]);
     return true;
   } catch (err) {
     console.warn('tossShare error:', err);

@@ -12,7 +12,7 @@ import './SharePanel.css';
 export default function SharePanel({ question }) {
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState(null);
-  const [debugVisible, setDebugVisible] = useState(false);
+  const [debugVisible, setDebugVisible] = useState(true);
   const tapRef = useRef({ count: 0, timer: null });
   const hasNativeShare = canNativeShare();
 
@@ -39,21 +39,27 @@ export default function SharePanel({ question }) {
   // ── Android: 카카오톡 공유 ──────────────────────────────────
   const handleKakao = async () => {
     setStatus('kakao');
-    const ok = await shareKakao(question);
-    if (!ok) {
-      // 카카오 실패 → 링크 복사 후 안내
-      const clipOk = await shareClipboard(question);
-      if (clipOk) {
-        setCopied(true);
-        setStatus('kakao-fallback');
-        setTimeout(() => { setCopied(false); setStatus(null); }, 3000);
-      } else {
-        setStatus('error');
-        setTimeout(() => setStatus(null), 5000);
+    try {
+      const ok = await shareKakao(question);
+      if (!ok) {
+        // 카카오 실패 → 링크 복사 후 안내
+        const clipOk = await shareClipboard(question);
+        if (clipOk) {
+          setCopied(true);
+          setStatus('kakao-fallback');
+          setTimeout(() => { setCopied(false); setStatus(null); }, 3000);
+        } else {
+          setStatus('error');
+          setTimeout(() => setStatus(null), 5000);
+        }
+        return;
       }
-      return;
+      setStatus(null);
+    } catch (e) {
+      console.error('[kakao handler]', e);
+      setStatus('error');
+      setTimeout(() => setStatus(null), 3000);
     }
-    setStatus(null);
   };
 
   // ── Android: 문자 공유 ──────────────────────────────────────

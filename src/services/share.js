@@ -28,8 +28,13 @@ function ensureKakao() {
     return false;
   }
   if (!window.Kakao.isInitialized()) {
-    window.Kakao.init(KAKAO_KEY);
-    log('kakao: initialized');
+    try {
+      window.Kakao.init(KAKAO_KEY);
+      log('kakao: initialized');
+    } catch (e) {
+      log(`kakao init FAIL: ${e?.message}`);
+      return false;
+    }
   }
   return true;
 }
@@ -66,7 +71,7 @@ export async function shareKakao(question) {
   if (!ensureKakao()) return false;
 
   try {
-    window.Kakao.Share.sendDefault({
+    await window.Kakao.Share.sendDefault({
       objectType: 'feed',
       content: {
         title: '매운맛 밸런스게임 🔥',
@@ -81,10 +86,10 @@ export async function shareKakao(question) {
         },
       ],
     });
-    log('kakao: sendDefault called');
+    log('kakao: sendDefault OK');
     return true;
   } catch (e) {
-    log(`kakao: ${e?.message}`);
+    log(`kakao FAIL: ${e?.message}`);
     return false;
   }
 }

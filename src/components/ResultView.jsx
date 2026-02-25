@@ -119,11 +119,7 @@ export default function ResultView({ voteCounts, onNext }) {
           <button className="next-button" onClick={onNext}>
             다음 질문 →
           </button>
-          <SharePanel
-            question={currentQuestion}
-            percentA={percentA}
-            percentB={percentB}
-          />
+          <SharePanel question={currentQuestion} />
         </div>
       )}
     </div>

@@ -4,8 +4,13 @@
   gap: var(--space-sm);
 }
 
+.share-buttons {
+  display: flex;
+  gap: var(--space-sm);
+}
+
 .share-btn {
-  width: 100%;
+  flex: 1;
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-md);
@@ -13,24 +18,9 @@
   transition: transform 0.1s ease, opacity 0.2s ease;
 }
 
-.share-btn--primary {
+.share-btn--share {
   background: var(--color-accent);
   color: #000;
-  padding: var(--space-md);
-}
-
-.share-secondary {
-  display: flex;
-  gap: var(--space-sm);
-}
-
-.share-secondary .share-btn {
-  flex: 1;
-}
-
-.share-btn--kakao {
-  background: var(--color-kakao);
-  color: var(--color-kakao-text);
 }
 
 .share-btn--copy {

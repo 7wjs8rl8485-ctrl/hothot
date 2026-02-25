@@ -89,14 +89,11 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <button className="mute-btn" onClick={handleToggleMute} aria-label={muted ? '소리 켜기' : '소리 끄기'}>
-          {muted ? '🔇' : '🔊'}
-        </button>
         <h1 className="app-title">매운맛 밸런스게임</h1>
         <button className="close-btn" onClick={handleClose} aria-label="닫기">
           ✕
         </button>
-        <CategoryFilter />
+        <CategoryFilter muted={muted} onToggleMute={handleToggleMute} />
       </header>
 
       <ProgressIndicator />

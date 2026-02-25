@@ -10,7 +10,7 @@ import './SharePanel.css';
 export default function SharePanel({ question }) {
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState(null);
-  const [debugVisible, setDebugVisible] = useState(true);
+  const [debugVisible, setDebugVisible] = useState(false);
   const tapRef = useRef({ count: 0, timer: null });
   const hasNativeShare = canNativeShare();
 

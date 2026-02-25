@@ -1,4 +1,4 @@
-import { closeView, getUserKeyForGame, setIosSwipeGestureEnabled } from '@apps-in-toss/web-bridge';
+import { closeView, getUserKeyForGame, setIosSwipeGestureEnabled, share as nativeShare } from '@apps-in-toss/web-bridge';
 
 // 토스 앱 내 WebView 환경인지 감지
 export function isTossEnv() {
@@ -29,6 +29,17 @@ export async function getTossUserKey() {
     return null;
   } catch {
     return null;
+  }
+}
+
+// 토스 네이티브 공유 시트
+export async function tossShare(message) {
+  try {
+    await nativeShare({ message });
+    return true;
+  } catch (err) {
+    console.warn('tossShare error:', err);
+    return false;
   }
 }
 

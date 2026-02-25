@@ -1,3 +1,5 @@
+import { isTossEnv, tossShare } from './toss.js';
+
 const APP_URL = typeof window !== 'undefined' ? window.location.origin : '';
 
 // ── 디버그 로그 ─────────────────────────────────────────────
@@ -17,8 +19,9 @@ export function canNativeShare() {
 }
 
 // ── 공유하기 ────────────────────────────────────────────────
-// iOS: navigator.share → 네이티브 공유 시트
-// Android WebView: 링크 복사 + 안내 (네이티브 공유 불가)
+// 1. 토스 환경 → tossShare() 네이티브 공유 시트 (iOS + Android)
+// 2. 브라우저 → navigator.share (Web Share API)
+// 3. fallback → 클립보드 복사
 export async function shareAction(question) {
   const url = `${APP_URL}?q=${question.id}`;
   const text =
@@ -26,9 +29,20 @@ export async function shareAction(question) {
     `${question.choiceA.text} vs ${question.choiceB.text}\n` +
     `너는 어느 쪽?\n${url}`;
 
-  log(`navigator.share=${!!navigator.share}`);
+  log(`toss=${isTossEnv()}, navigator.share=${!!navigator.share}`);
 
-  // iOS — 네이티브 공유 시트
+  // 토스 앱 — 네이티브 공유 시트 (iOS + Android 모두)
+  if (isTossEnv()) {
+    try {
+      const ok = await tossShare(text);
+      log(`toss-share: ${ok}`);
+      if (ok) return { ok: true };
+    } catch (e) {
+      log(`toss-share error: ${e?.message}`);
+    }
+  }
+
+  // 브라우저 — Web Share API
   if (navigator.share) {
     try {
       await navigator.share({ title: '매운맛 밸런스게임', text, url });
@@ -40,7 +54,7 @@ export async function shareAction(question) {
     }
   }
 
-  // Android WebView — 링크 복사 fallback
+  // 최종 fallback — 클립보드 복사
   log('fallback: clipboard');
   const copied = await copyToClipboard(url);
   return { ok: false, copied };

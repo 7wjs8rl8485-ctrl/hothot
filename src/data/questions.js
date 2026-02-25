@@ -30,7 +30,7 @@ export const questions = [
     id: 'q054',
     category: 'dating',
     choiceA: { text: '연인 카톡에서 썸녀/썸남 발견', emoji: '💬' },
-    choiceB: { text: '연인 카톡에서 나 욕하는 대화 발견', emoji: '🤬' },
+    choiceB: { text: '연인 카톡에서 나 험담하는 대화 발견', emoji: '🤬' },
   },
   {
     id: 'q100',
@@ -824,7 +824,7 @@ export const questions = [
     id: 'q166',
     category: 'crazy',
     choiceA: { text: '거짓말할 때마다 머리카락 1가닥 빠짐', emoji: '💇' },
-    choiceB: { text: '욕할 때마다 키 1mm 줄어듦', emoji: '📏' },
+    choiceB: { text: '화낼 때마다 키 1mm 줄어듦', emoji: '📏' },
   },
   {
     id: 'q167',

@@ -32,7 +32,7 @@ export default function SharePanel({ question, percentA, percentB }) {
       </button>
       <div className="share-secondary">
         <button className="share-btn share-btn--kakao" onClick={handleKakao}>
-          카카오톡
+          카카오톡 공유
         </button>
         <button className="share-btn share-btn--copy" onClick={handleCopy}>
           {copied ? '복사됨!' : '링크 복사'}

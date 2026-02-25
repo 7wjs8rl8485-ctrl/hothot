@@ -1,4 +1,5 @@
 const APP_URL = typeof window !== 'undefined' ? window.location.origin : '';
+const KAKAO_KEY = import.meta.env.VITE_KAKAO_JS_KEY;
 
 // ── 디버그 로그 ─────────────────────────────────────────────
 const _logs = [];
@@ -11,11 +12,29 @@ export function getShareDebugLogs() {
   return [..._logs];
 }
 
+// ── 환경 감지 ───────────────────────────────────────────────
+export function canNativeShare() {
+  return typeof navigator !== 'undefined' && !!navigator.share;
+}
+
 function isAndroid() {
   return /android/i.test(navigator.userAgent);
 }
 
-// ── 공유하기 (네이티브 공유 시트) ─────────────────────────────
+// ── Kakao SDK 초기화 ────────────────────────────────────────
+function ensureKakao() {
+  if (!window.Kakao) {
+    log('kakao: SDK not loaded');
+    return false;
+  }
+  if (!window.Kakao.isInitialized()) {
+    window.Kakao.init(KAKAO_KEY);
+    log('kakao: initialized');
+  }
+  return true;
+}
+
+// ── 공유하기 (네이티브 공유 시트 — iOS 전용) ────────────────
 export async function shareGeneric(question) {
   const url = `${APP_URL}?q=${question.id}`;
   const text =
@@ -25,7 +44,6 @@ export async function shareGeneric(question) {
 
   log(`webShareAPI=${!!navigator.share}, android=${isAndroid()}`);
 
-  // ── 전략 1: Web Share API (iOS, Chrome standalone) ─────────
   if (navigator.share) {
     try {
       await navigator.share({ title: '매운맛 밸런스게임', text, url });
@@ -37,33 +55,56 @@ export async function shareGeneric(question) {
     }
   }
 
-  // ── 전략 2 (Android WebView): intent URL → <a> click ──────
-  // iframe은 WebView의 shouldOverrideUrlLoading을 트리거하지 못함
-  // <a>.click()은 실제 네비게이션으로 처리되어 intent 핸들링 가능
-  if (isAndroid()) {
-    const intentUrl =
-      `intent://send/#Intent;` +
-      `action=android.intent.action.SEND;` +
-      `type=text/plain;` +
-      `S.android.intent.extra.TEXT=${encodeURIComponent(text)};end`;
-
-    try {
-      log('intent: <a>.click...');
-      const a = document.createElement('a');
-      a.href = intentUrl;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      log('intent: <a>.click done');
-      return { ok: true, method: 'intent', uncertain: true };
-    } catch (e) {
-      log(`intent(a): ${e?.message}`);
-    }
-  }
-
-  log('all methods failed');
+  log('navigator.share not available');
   return { ok: false };
+}
+
+// ── 카카오톡 공유 ───────────────────────────────────────────
+export async function shareKakao(question) {
+  const url = `${APP_URL}?q=${question.id}`;
+
+  if (!ensureKakao()) return false;
+
+  try {
+    window.Kakao.Share.sendDefault({
+      objectType: 'feed',
+      content: {
+        title: '매운맛 밸런스게임 🔥',
+        description: `${question.choiceA.text} vs ${question.choiceB.text}`,
+        imageUrl: `${APP_URL}/og-image.png`,
+        link: { mobileWebUrl: url, webUrl: url },
+      },
+      buttons: [
+        {
+          title: '투표하러 가기',
+          link: { mobileWebUrl: url, webUrl: url },
+        },
+      ],
+    });
+    log('kakao: sendDefault called');
+    return true;
+  } catch (e) {
+    log(`kakao: ${e?.message}`);
+    return false;
+  }
+}
+
+// ── 문자(SMS) 공유 ──────────────────────────────────────────
+export function shareSMS(question) {
+  const url = `${APP_URL}?q=${question.id}`;
+  const text =
+    `매운맛 밸런스게임\n` +
+    `${question.choiceA.text} vs ${question.choiceB.text}\n` +
+    `너는 어느 쪽?\n${url}`;
+
+  try {
+    window.location.href = `sms:?body=${encodeURIComponent(text)}`;
+    log('sms: opened');
+    return true;
+  } catch (e) {
+    log(`sms: ${e?.message}`);
+    return false;
+  }
 }
 
 // ── 링크 복사 ──────────────────────────────────────────────

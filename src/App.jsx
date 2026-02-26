@@ -90,6 +90,7 @@ export default function App() {
   };
 
   const handleExitConfirm = () => {
+    setShowExitModal(false);
     closeMiniApp();
   };
 

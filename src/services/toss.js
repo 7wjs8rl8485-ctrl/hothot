@@ -12,17 +12,32 @@ export function isTossEnv() {
 }
 
 // 미니앱 닫기
-export async function closeMiniApp() {
+export function closeMiniApp() {
+  // 1차: 공식 SDK closeView (fire-and-forget, await 안 함)
   try {
-    await Promise.race([
-      closeView(),
-      new Promise(resolve => setTimeout(resolve, 500)),
-    ]);
+    closeView();
   } catch (err) {
     console.warn('closeView error:', err);
   }
-  // closeView가 동작하지 않은 경우 fallback
-  try { window.close(); } catch { /* ignore */ }
+
+  // 2차: 네이티브 bridge 직접 호출 시도
+  try {
+    if (window.__granite_bridge__?.close) {
+      window.__granite_bridge__.close();
+    }
+  } catch { /* ignore */ }
+
+  // 3차: window.close fallback (약간의 딜레이 후)
+  setTimeout(() => {
+    try { window.close(); } catch { /* ignore */ }
+  }, 300);
+
+  // 4차: 토스 앱 메인으로 이동 (최후의 fallback)
+  setTimeout(() => {
+    try {
+      window.location.href = 'supertoss://toss';
+    } catch { /* ignore */ }
+  }, 600);
 }
 
 // 유저 키 조회 (게임용)

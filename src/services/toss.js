@@ -14,7 +14,10 @@ export function isTossEnv() {
 // 미니앱 닫기
 export async function closeMiniApp() {
   try {
-    await closeView();
+    await Promise.race([
+      closeView(),
+      new Promise(resolve => setTimeout(resolve, 500)),
+    ]);
   } catch (err) {
     console.warn('closeView error:', err);
   }

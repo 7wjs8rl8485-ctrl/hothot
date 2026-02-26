@@ -1,17 +1,14 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import {
   canNativeShare,
   shareAction,
   shareClipboard,
-  getShareDebugLogs,
 } from '../services/share.js';
 import './SharePanel.css';
 
 export default function SharePanel({ question }) {
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState(null);
-  const [debugVisible, setDebugVisible] = useState(false);
-  const tapRef = useRef({ count: 0, timer: null });
   const hasNativeShare = canNativeShare();
 
   const handleShare = async () => {
@@ -54,18 +51,6 @@ export default function SharePanel({ question }) {
     }
   };
 
-  // 5번 탭 → 디버그 토글
-  const handleDebugTap = () => {
-    const ref = tapRef.current;
-    ref.count++;
-    clearTimeout(ref.timer);
-    ref.timer = setTimeout(() => { ref.count = 0; }, 600);
-    if (ref.count >= 5) {
-      ref.count = 0;
-      setDebugVisible(v => !v);
-    }
-  };
-
   const shareLabel = () => {
     if (status === 'sharing') return '공유 중...';
     if (status === 'guide') return '링크 복사됨!';
@@ -89,15 +74,12 @@ export default function SharePanel({ question }) {
       </div>
 
       {status === 'guide' && !hasNativeShare && (
-        <p className="share-guide" onClick={handleDebugTap}>
+        <p className="share-guide">
           링크가 복사되었어요!<br />
           아래 <strong>공유(↗)</strong> 버튼을 눌러 공유할 수 있어요
         </p>
       )}
 
-      {debugVisible && (
-        <pre className="share-debug">{getShareDebugLogs().join('\n') || '(로그 없음)'}</pre>
-      )}
     </div>
   );
 }

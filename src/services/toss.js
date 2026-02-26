@@ -18,6 +18,8 @@ export async function closeMiniApp() {
   } catch (err) {
     console.warn('closeView error:', err);
   }
+  // closeView가 동작하지 않은 경우 fallback
+  try { window.close(); } catch { /* ignore */ }
 }
 
 // 유저 키 조회 (게임용)

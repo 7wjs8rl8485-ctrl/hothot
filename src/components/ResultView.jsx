@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useGame } from '../context/GameContext.jsx';
 import { playSfx } from '../services/sound.js';
 import SharePanel from './SharePanel.jsx';
+import AdBanner from './AdBanner.jsx';
 import './ResultView.css';
 
 export default function ResultView({ voteCounts, onNext }) {
@@ -120,6 +121,7 @@ export default function ResultView({ voteCounts, onNext }) {
             다음 질문 →
           </button>
           <SharePanel question={currentQuestion} />
+          <AdBanner />
         </div>
       )}
     </div>

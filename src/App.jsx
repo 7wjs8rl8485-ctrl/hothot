@@ -9,12 +9,14 @@ import SwipeContainer from './components/SwipeContainer.jsx';
 import QuestionCard from './components/QuestionCard.jsx';
 import ResultView from './components/ResultView.jsx';
 import ExitModal from './components/ExitModal.jsx';
+import AdInterstitial from './components/AdInterstitial.jsx';
 import './App.css';
 
 export default function App() {
   const { phase, currentQuestion, isRoundEnd, isAllDone, roundNumber, alreadyVoted, dispatch } = useGame();
   const { counts, submitVote } = useVote(currentQuestion?.id);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [showAd, setShowAd] = useState(false);
   const [muted, setMuted] = useState(isMuted());
   const prevFinished = useRef(false);
 
@@ -47,6 +49,11 @@ export default function App() {
     }
     prevFinished.current = isAllDone;
   }, [isAllDone]);
+
+  // 라운드 끝나면 전면 광고 표시
+  useEffect(() => {
+    if (isRoundEnd) setShowAd(true);
+  }, [isRoundEnd]);
 
   // iOS 스와이프 뒤로가기 비활성화
   useEffect(() => {
@@ -111,16 +118,20 @@ export default function App() {
             </button>
           </div>
         ) : isRoundEnd ? (
-          <div className="finished-screen">
-            <div className="finished-emoji">🔥</div>
-            <p className="finished-text">라운드 {roundNumber - 1} 클리어!</p>
-            <button
-              className="restart-button"
-              onClick={() => { playSfx('next'); dispatch({ type: 'NEXT_ROUND' }); }}
-            >
-              더 매운 거 도전 🔥
-            </button>
-          </div>
+          showAd ? (
+            <AdInterstitial onClose={() => setShowAd(false)} />
+          ) : (
+            <div className="finished-screen">
+              <div className="finished-emoji">🔥</div>
+              <p className="finished-text">라운드 {roundNumber - 1} 클리어!</p>
+              <button
+                className="restart-button"
+                onClick={() => { playSfx('next'); dispatch({ type: 'NEXT_ROUND' }); }}
+              >
+                더 매운 거 도전 🔥
+              </button>
+            </div>
+          )
         ) : (
           <SwipeContainer onSwipeLeft={showResult ? handleNext : undefined}>
             {showResult ? (

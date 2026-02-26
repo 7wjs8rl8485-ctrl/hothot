@@ -1,0 +1,26 @@
+.ad-banner {
+  width: 100%;
+  height: 100px;
+  background: var(--color-surface);
+  border: 2px dashed var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.ad-banner-label {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-accent);
+  background: rgba(255, 215, 0, 0.15);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.ad-banner-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
